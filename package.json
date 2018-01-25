@@ -1,0 +1,11 @@
+{
+  "name": "beforeUpload",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:gongpeione/beforeUpload.git",
+  "author": "Geeku <ggongpei@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "events": "^1.1.1"
+  }
+}

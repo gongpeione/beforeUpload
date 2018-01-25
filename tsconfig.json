@@ -1,0 +1,28 @@
+{
+    "include": [
+      "src/**/*"
+    ],
+    "exclude": [
+      "node_modules",
+      "dist",
+      "example",
+      "test"
+    ],
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "experimentalDecorators": true,
+        "allowJs": true,
+        "module": "esnext",
+        "target": "es6",
+        "moduleResolution": "node",
+        "isolatedModules": true,
+        "sourceMap": true,
+        "pretty": true,
+        "outDir": "dist",
+        "rootDir": "src"
+    }
+  }
