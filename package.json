@@ -7,5 +7,11 @@
   "license": "MIT",
   "dependencies": {
     "events": "^1.1.1"
+  },
+  "scripts": {
+    "ts": "tsc -p . -w"
+  },
+  "devDependencies": {
+    "typescript": "^2.6.2"
   }
 }

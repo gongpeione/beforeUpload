@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
-
-function addEvents (target, names, cb) {
+function addEvents(target, names, cb) {
     if (!Array.isArray(names)) {
         target.addEventListener(names, e => cb(e, name));
         return;
@@ -9,52 +8,29 @@ function addEvents (target, names, cb) {
         target.addEventListener(name, e => cb(e, name));
     });
 }
-
-interface HTMLInputFileElement extends HTMLInputElement {
-    capture: string
-}
-
 class BeforeUpload extends EventEmitter {
-    public static ENABLE_CLICK = 1;
-    public static ENABLE_COPY_PASTE = 2;
-    public static ENABLE_DRAG = 4;
-
-    private container: HTMLElement;
-    private flag: number;
-    private inputEl: HTMLInputFileElement;
-    private opt;
-    private disabled = false;
-
-    private _files: FileList;
-
-    private handlers = {};
-
-    constructor (container: string, flag: number, opt?) {
+    constructor(container, flag, opt) {
         super();
+        this.disabled = false;
+        this.handlers = {};
         this.container = document.querySelector(container) || document.body;
-        this.flag = flag || (  
-                        BeforeUpload.ENABLE_CLICK | 
-                        BeforeUpload.ENABLE_COPY_PASTE | 
-                        BeforeUpload.ENABLE_DRAG
-                    );
+        this.flag = flag || (BeforeUpload.ENABLE_CLICK |
+            BeforeUpload.ENABLE_COPY_PASTE |
+            BeforeUpload.ENABLE_DRAG);
         this.opt = opt || {};
         this.inputEl = opt.inputEl || document.createElement('input');
         this.inputEl.type = 'file';
         this.inputEl.hidden = true;
-
         Object.keys(opt).forEach(attr => {
             if (attr in this.inputEl) {
                 this.inputEl[attr] = opt[attr];
             }
         });
-
         this.setCapture();
-        
         this.process();
     }
-
-    private process () {
-        const addEventsListener = (names, cb, target?) => {
+    process() {
+        const addEventsListener = (names, cb, target) => {
             (Array.isArray(names) ? names : [names]).forEach(name => {
                 if (!this.handlers[name]) {
                     this.handlers[name] = [];
@@ -62,15 +38,15 @@ class BeforeUpload extends EventEmitter {
                 this.handlers[name].push(cb);
             });
             const cbWrapped = (...args) => {
-                if (this.disabled) return;
+                if (this.disabled)
+                    return;
                 cb(...args);
-            }
+            };
             addEvents.call(this, target || this.container, names, cbWrapped);
-        }
-
+        };
         if (BeforeUpload.ENABLE_CLICK & this.flag) {
             addEventsListener(['click', 'touchend'], e => {
-                (this as EventEmitter).emit('click');
+                this.emit('click');
                 this.open();
             });
             addEventsListener('change', e => {
@@ -82,14 +58,14 @@ class BeforeUpload extends EventEmitter {
                 console.error('onpaste is not supported, try to update or change your browser.');
                 return;
             }
-            addEventsListener('paste', (e: ClipboardEvent) => {
+            addEventsListener('paste', (e) => {
                 this.files = e.clipboardData.files;
             });
         }
         if (BeforeUpload.ENABLE_DRAG & this.flag) {
             addEventsListener(['dragover', 'dragleave'], (e, name) => {
                 e.preventDefault();
-                (this as EventEmitter).emit(name);
+                this.emit(name);
             });
             addEventsListener('drop', e => {
                 e.preventDefault();
@@ -97,26 +73,25 @@ class BeforeUpload extends EventEmitter {
             });
         }
     }
-
-    private setCapture () {
+    setCapture() {
         if (this.inputEl.capture) {
             return;
         }
         const accpet = this.inputEl.accept.toLowerCase();
         if (accpet.indexOf('image') > -1) {
             this.inputEl.capture = 'camera';
-        } else if (accpet.indexOf('audio') > -1) {
-            this.inputEl.capture = 'microphone'
-        } else if (accpet.indexOf('video') > -1) {
-            this.inputEl.capture = 'camcorder'
+        }
+        else if (accpet.indexOf('audio') > -1) {
+            this.inputEl.capture = 'microphone';
+        }
+        else if (accpet.indexOf('video') > -1) {
+            this.inputEl.capture = 'camcorder';
         }
     }
-
-    private onfile (e?) {
-        (this as EventEmitter).emit('file', this.files, e);
+    onfile(e) {
+        this.emit('file', this.files, e);
     }
-
-    public disable () {
+    disable() {
         this.disabled = true;
         // Object.keys(this.handlers).forEach(name => {
         //     const handlerArr = this.handlers[name];
@@ -127,21 +102,22 @@ class BeforeUpload extends EventEmitter {
         // });
         // console.log(this);
     }
-
-    private open () {
+    open() {
         this.inputEl.click();
     }
-
-    get files () {
+    get files() {
         return this._files;
     }
-
-    set files (newVal) {
+    set files(newVal) {
         this._files = newVal;
-        (this as EventEmitter).emit('file', this.files);
+        this.emit('file', this.files);
     }
 }
-
-export default function setBeforeUpload (container: string, flag: number, opt?) {
+BeforeUpload.ENABLE_CLICK = 1;
+BeforeUpload.ENABLE_COPY_PASTE = 2;
+BeforeUpload.ENABLE_DRAG = 4;
+export default function setBeforeUpload(container, flag, opt) {
     return new BeforeUpload(container, flag, opt || {});
-};
+}
+;
+//# sourceMappingURL=index.js.map
