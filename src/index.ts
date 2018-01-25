@@ -23,6 +23,26 @@ class BeforeUpload extends EventEmitter {
     private _files: FileList;
     private on;
 
+    private handlers = {
+        click: e => {
+            (this as EventEmitter).emit('click');
+            this.open();
+        },
+        paste: (e: ClipboardEvent) => {
+            this.files = e.clipboardData.files;
+            (this as EventEmitter).emit('file', this.files, e);
+        },
+        drag: (e, name) => {
+            e.preventDefault();
+            (this as EventEmitter).emit(name);
+        },
+        drop: e => {
+            e.preventDefault();
+            this.files = e.dataTransfer.files;
+            (this as EventEmitter).emit('file', this.files, e);
+        }
+    }
+
     constructor (container: HTMLElement, flag: number, opt?) {
         super();
         this.container = container || document.body;
@@ -49,38 +69,27 @@ class BeforeUpload extends EventEmitter {
         const addEventsListener = addEvents.bind(this, this.container);
 
         if (BeforeUpload.ENABLE_CLICK & this.flag) {
-            this.on(['click', 'touchend'], e => {
-                (this as EventEmitter).emit('click');
-                this.open();
-            });
+            addEventsListener(['click', 'touchend'], this.handlers.click);
         }
         if (BeforeUpload.ENABLE_COPY_PASTE & this.flag) {
             if (!('onpaste' in document)) {
                 console.error('onpaste is not supported, try to update or change your browser.');
                 return;
             }
-            addEventsListener('paste', (e: ClipboardEvent) => {
-                const url = e.clipboardData.getData('text');
-                if (toType(e.clipboardData.files[0]) === 'file') {
-                    this.upload(e.clipboardData.files[0]);
-                } else if (urlRegex.test(url)) {
-                    console.log(url);
-                    this.upload(url);
-                }
-            });
-            e.clipboardData.files
+            addEventsListener('paste', this.handlers.paste);
         }
         if (BeforeUpload.ENABLE_DRAG & this.flag) {
-            addEventsListener(this.container, ['dragover', 'dragleave'], (e, name) => {
-                e.preventDefault();
-                (this as EventEmitter).emit(name);
-            });
-            addEventsListener('drop', e => {
-                e.preventDefault();
-                this.files = e.dataTransfer.files;
-                (this as EventEmitter).emit('drop');
-            });
+            addEventsListener(this.container, ['dragover', 'dragleave'], this.handlers.drag);
+            addEventsListener('drop', this.handlers.drop);
         }
+    }
+
+    private processCapture () {
+        
+    }
+
+    private disable () {
+        // Object.keys(this.handlers).forEach(e)
     }
 
     private open () {
