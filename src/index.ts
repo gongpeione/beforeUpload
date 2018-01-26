@@ -2,11 +2,11 @@ import { EventEmitter } from 'events';
 
 function addEvents (target, names, cb) {
     if (!Array.isArray(names)) {
-        target.addEventListener(names, e => cb(e, name));
+        target.addEventListener(names, cb);
         return;
     }
     names.forEach(name => {
-        target.addEventListener(name, e => cb(e, name));
+        target.addEventListener(name, cb);
     });
 }
 
@@ -47,13 +47,16 @@ class BeforeUpload extends EventEmitter {
                 this.inputEl[attr] = opt[attr];
             }
         });
-
-        this.setCapture();
         
         this.process();
     }
 
     private process () {
+        this.setCapture();
+        this.addEvents();
+    }
+
+    private addEvents () {
         const addEventsListener = (names, cb, target?) => {
             (Array.isArray(names) ? names : [names]).forEach(name => {
                 if (!this.handlers[name]) {
@@ -61,16 +64,17 @@ class BeforeUpload extends EventEmitter {
                 }
                 this.handlers[name].push(cb);
             });
-            const cbWrapped = (...args) => {
-                if (this.disabled) return;
-                cb(...args);
-            }
-            addEvents.call(this, target || this.container, names, cbWrapped);
+            // const cbWrapped = (...args) => {
+            //     if (this.disabled) return;
+            //     cb(...args);
+            // }
+            addEvents.call(this, target || this.container, names, cb);
         }
 
         if (BeforeUpload.ENABLE_CLICK & this.flag) {
-            addEventsListener(['click', 'touchend'], e => {
-                (this as EventEmitter).emit('click');
+            const clickEventType = (document.ontouchend !== null) ? 'click' : 'touchend';
+            addEventsListener(clickEventType, e => {
+                (this as EventEmitter).emit(e.type);
                 this.open();
             });
             addEventsListener('change', e => {
@@ -83,18 +87,22 @@ class BeforeUpload extends EventEmitter {
                 return;
             }
             addEventsListener('paste', (e: ClipboardEvent) => {
+                (this as EventEmitter).emit(e.type);
                 this.files = e.clipboardData.files;
             });
         }
         if (BeforeUpload.ENABLE_DRAG & this.flag) {
-            addEventsListener(['dragover', 'dragleave'], (e, name) => {
+            addEventsListener(['dragover', 'dragleave'], e => {
+                if (e.target !== this.container) return;
                 e.preventDefault();
-                (this as EventEmitter).emit(name);
-            });
+                (this as EventEmitter).emit(e.type);
+            }, document);
             addEventsListener('drop', e => {
+                if (e.target !== this.container) return;
                 e.preventDefault();
+                (this as EventEmitter).emit(e.type);
                 this.files = e.dataTransfer.files;
-            });
+            }, document);
         }
     }
 
@@ -118,14 +126,17 @@ class BeforeUpload extends EventEmitter {
 
     public disable () {
         this.disabled = true;
-        // Object.keys(this.handlers).forEach(name => {
-        //     const handlerArr = this.handlers[name];
-        //     handlerArr.forEach(cb => {
-        //         console.log(this.container, name, cb);
-        //         this.container.removeEventListener(name, cb);
-        //     });
-        // });
-        // console.log(this);
+        Object.keys(this.handlers).forEach(name => {
+            const handlerArr = this.handlers[name];
+            handlerArr.forEach(cb => {
+                this.container.removeEventListener(name, cb);
+            });
+        });
+    }
+
+    public enable () {
+        this.disabled = false;
+        this.addEvents();
     }
 
     private open () {

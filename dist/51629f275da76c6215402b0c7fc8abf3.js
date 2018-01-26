@@ -381,11 +381,11 @@ var _events = require("events");
 
 function addEvents(target, names, cb) {
   if (!Array.isArray(names)) {
-    target.addEventListener(names, e => cb(e, name));
+    target.addEventListener(names, cb);
     return;
   }
   names.forEach(name => {
-    target.addEventListener(name, e => cb(e, name));
+    target.addEventListener(name, cb);
   });
 }
 class BeforeUpload extends _events.EventEmitter {
@@ -404,10 +404,13 @@ class BeforeUpload extends _events.EventEmitter {
         this.inputEl[attr] = opt[attr];
       }
     });
-    this.setCapture();
     this.process();
   }
   process() {
+    this.setCapture();
+    this.addEvents();
+  }
+  addEvents() {
     const addEventsListener = (names, cb, target) => {
       (Array.isArray(names) ? names : [names]).forEach(name => {
         if (!this.handlers[name]) {
@@ -415,15 +418,16 @@ class BeforeUpload extends _events.EventEmitter {
         }
         this.handlers[name].push(cb);
       });
-      const cbWrapped = (...args) => {
-        if (this.disabled) return;
-        cb(...args);
-      };
-      addEvents.call(this, target || this.container, names, cbWrapped);
+      // const cbWrapped = (...args) => {
+      //     if (this.disabled) return;
+      //     cb(...args);
+      // }
+      addEvents.call(this, target || this.container, names, cb);
     };
     if (BeforeUpload.ENABLE_CLICK & this.flag) {
-      addEventsListener(['click', 'touchend'], e => {
-        this.emit('click');
+      const clickEventType = document.ontouchend !== null ? 'click' : 'touchend';
+      addEventsListener(clickEventType, e => {
+        this.emit(e.type);
         this.open();
       });
       addEventsListener('change', e => {
@@ -436,18 +440,22 @@ class BeforeUpload extends _events.EventEmitter {
         return;
       }
       addEventsListener('paste', e => {
+        this.emit(e.type);
         this.files = e.clipboardData.files;
       });
     }
     if (BeforeUpload.ENABLE_DRAG & this.flag) {
-      addEventsListener(['dragover', 'dragleave'], (e, name) => {
+      addEventsListener(['dragover', 'dragleave'], e => {
+        if (e.target !== this.container) return;
         e.preventDefault();
-        this.emit(name);
-      });
+        this.emit(e.type);
+      }, document);
       addEventsListener('drop', e => {
+        if (e.target !== this.container) return;
         e.preventDefault();
+        this.emit(e.type);
         this.files = e.dataTransfer.files;
-      });
+      }, document);
     }
   }
   setCapture() {
@@ -468,14 +476,16 @@ class BeforeUpload extends _events.EventEmitter {
   }
   disable() {
     this.disabled = true;
-    // Object.keys(this.handlers).forEach(name => {
-    //     const handlerArr = this.handlers[name];
-    //     handlerArr.forEach(cb => {
-    //         console.log(this.container, name, cb);
-    //         this.container.removeEventListener(name, cb);
-    //     });
-    // });
-    // console.log(this);
+    Object.keys(this.handlers).forEach(name => {
+      const handlerArr = this.handlers[name];
+      handlerArr.forEach(cb => {
+        this.container.removeEventListener(name, cb);
+      });
+    });
+  }
+  enable() {
+    this.disabled = false;
+    this.addEvents();
   }
   open() {
     this.inputEl.click();
@@ -505,12 +515,13 @@ var _index2 = _interopRequireDefault(_index);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const bu = (0, _index2.default)('main', 3);
+const bu = (0, _index2.default)('main', 7);
 console.log(bu);
 bu.on('click', e => console.log('click'));
 bu.on('file', f => console.log(f));
 bu.on('paste', e => console.log('paste'));
 document.querySelector('.disable').addEventListener('click', e => bu.disable());
+document.querySelector('.enable').addEventListener('click', e => bu.enable());
 },{"../src/index.ts":6}],0:[function(require,module,exports) {
 var global = (1,eval)('this');
 var OldModule = module.bundle.Module;
@@ -529,7 +540,7 @@ function Module() {
 module.bundle.Module = Module;
 
 if (!module.bundle.parent) {
-  var ws = new WebSocket('ws://localhost:60631/');
+  var ws = new WebSocket('ws://localhost:58214/');
   ws.onmessage = (e) => {
     var data = JSON.parse(e.data);
 
