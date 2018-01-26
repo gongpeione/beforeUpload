@@ -449,13 +449,13 @@ class BeforeUpload extends _events.EventEmitter {
         if (e.target !== this.container) return;
         e.preventDefault();
         this.emit(e.type);
-      }, document);
+      });
       addEventsListener('drop', e => {
         if (e.target !== this.container) return;
         e.preventDefault();
         this.emit(e.type);
         this.files = e.dataTransfer.files;
-      }, document);
+      });
     }
   }
   setCapture() {
