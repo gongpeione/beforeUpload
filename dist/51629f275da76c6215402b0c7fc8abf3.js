@@ -375,6 +375,7 @@ function isUndefined(arg) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.BeforeUpload = undefined;
 exports.default = setBeforeUpload;
 
 var _events = require("events");
@@ -498,6 +499,7 @@ class BeforeUpload extends _events.EventEmitter {
     this.emit('file', this.files);
   }
 }
+exports.BeforeUpload = BeforeUpload;
 BeforeUpload.ENABLE_CLICK = 1;
 BeforeUpload.ENABLE_COPY_PASTE = 2;
 BeforeUpload.ENABLE_DRAG = 4;

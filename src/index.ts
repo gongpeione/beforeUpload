@@ -14,7 +14,7 @@ interface HTMLInputFileElement extends HTMLInputElement {
     capture: string
 }
 
-class BeforeUpload extends EventEmitter {
+export class BeforeUpload extends EventEmitter {
     public static ENABLE_CLICK = 1;
     public static ENABLE_COPY_PASTE = 2;
     public static ENABLE_DRAG = 4;
