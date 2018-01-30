@@ -389,14 +389,18 @@ function addEvents(target, names, cb) {
     target.addEventListener(name, cb);
   });
 }
+const defaultOpt = {
+  pasteOnDoc: true
+};
 class BeforeUpload extends _events.EventEmitter {
   constructor(container, flag, opt) {
     super();
     this.disabled = false;
+    this.previews = [];
     this.handlers = {};
     this.container = document.querySelector(container) || document.body;
     this.flag = flag || BeforeUpload.ENABLE_CLICK | BeforeUpload.ENABLE_COPY_PASTE | BeforeUpload.ENABLE_DRAG;
-    this.opt = opt || {};
+    this.opt = Object.assign(opt, defaultOpt);
     this.inputEl = opt.inputEl || document.createElement('input');
     this.inputEl.type = 'file';
     this.inputEl.hidden = true;
@@ -441,9 +445,10 @@ class BeforeUpload extends _events.EventEmitter {
         return;
       }
       addEventsListener('paste', e => {
+        console.log(e.clipboardData.files.length);
         this.emit(e.type);
         this.files = e.clipboardData.files;
-      });
+      }, this.opt.pasteOnDoc ? document : this.container); // Recommend add paste event on document 
     }
     if (BeforeUpload.ENABLE_DRAG & this.flag) {
       addEventsListener(['dragover', 'dragleave'], e => {
@@ -483,12 +488,25 @@ class BeforeUpload extends _events.EventEmitter {
         this.container.removeEventListener(name, cb);
       });
     });
+    this.previews.forEach(url => URL.revokeObjectURL(url));
+  }
+  getPreviewList() {
+    const accpet = this.inputEl.accept.toLowerCase();
+    if (accpet.indexOf('image') === -1) {
+      throw new Error('Only images supported.');
+    }
+    this.previews = Array.from(this.files, file => {
+      return URL.createObjectURL(file);
+    });
+    return this.previews;
   }
   enable() {
+    if (!this.disabled) return;
     this.disabled = false;
     this.addEvents();
   }
   open() {
+    this.inputEl.value = '';
     this.inputEl.click();
   }
   get files() {
@@ -517,10 +535,26 @@ var _index2 = _interopRequireDefault(_index);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const bu = (0, _index2.default)('main', 7);
+const bu = (0, _index2.default)('main .upload', 7, {
+  accept: 'image/*',
+  multiple: true
+});
+const preview = document.querySelector('.preview');
 console.log(bu);
 bu.on('click', e => console.log('click'));
-bu.on('file', f => console.log(f));
+bu.on('file', f => {
+  console.log(f);
+  preview.innerHTML = '';
+  const fg = document.createDocumentFragment();
+  bu.getPreviewList().forEach(url => {
+    const img = document.createElement('img');
+    img.src = url;
+    img.width = 100;
+    img.height = 100;
+    fg.appendChild(img);
+  });
+  preview.appendChild(fg);
+});
 bu.on('paste', e => console.log('paste'));
 document.querySelector('.disable').addEventListener('click', e => bu.disable());
 document.querySelector('.enable').addEventListener('click', e => bu.enable());
@@ -542,7 +576,7 @@ function Module() {
 module.bundle.Module = Module;
 
 if (!module.bundle.parent) {
-  var ws = new WebSocket('ws://localhost:58214/');
+  var ws = new WebSocket('ws://localhost:64868/');
   ws.onmessage = (e) => {
     var data = JSON.parse(e.data);
 

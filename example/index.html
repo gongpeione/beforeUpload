@@ -15,18 +15,58 @@
     <meta name="theme-color" content="#363d4c">
 
     <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
         main {
-            background-color: #ddd;
-            width: 200px;
-            height: 200px;
+            position:  relative;
+            width: 100vw;
+            height: 100vh;
+            background: rgb(7, 55, 95);
+        }
+        main::before {
+            content: "Click, Drag Drop or paste";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            font-weight: 900;
+            color: #185688;
+            text-shadow: -1px -1px rgba(0,0,0,.5);
+        }
+        .upload {
+            height: 80vh;
+        }
+        .preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 20vh;
+            background: rgba(0,0,0,.2);
+        }
+        .preview img {
+            margin: 0 5px;
+        }
+        .ctrl {
+            position: fixed;
+            top: 10px;
+            right: 10px;
         }
     </style>
 
 </head>
 <body>
-    <main></main>
-    <button class="disable">Disable</button>
-    <button class="enable">Enable</button>
+    <main>
+        <div class="upload"></div>
+        <section class="preview"></section>
+    </main>
+    <div class="ctrl">
+        <button class="disable">Disable</button>
+        <button class="enable">Enable</button>
+    </div>
+    
     <script src="./index.js"></script>
 </body>
 </html>

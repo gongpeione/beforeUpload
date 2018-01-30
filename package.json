@@ -9,7 +9,8 @@
     "events": "^1.1.1"
   },
   "scripts": {
-    "ts": "tsc -p . -w"
+    "ts": "tsc -p . -w",
+    "dev": "parcel example/index.html --no-cache --port 9998"
   },
   "devDependencies": {
     "typescript": "^2.6.2"

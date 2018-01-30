@@ -14,6 +14,10 @@ interface HTMLInputFileElement extends HTMLInputElement {
     capture: string
 }
 
+const defaultOpt = {
+    pasteOnDoc: true
+};
+
 export class BeforeUpload extends EventEmitter {
     public static ENABLE_CLICK = 1;
     public static ENABLE_COPY_PASTE = 2;
@@ -24,6 +28,8 @@ export class BeforeUpload extends EventEmitter {
     private inputEl: HTMLInputFileElement;
     private opt;
     private disabled = false;
+    
+    public previews = [];
 
     private _files: FileList;
 
@@ -37,7 +43,7 @@ export class BeforeUpload extends EventEmitter {
                         BeforeUpload.ENABLE_COPY_PASTE | 
                         BeforeUpload.ENABLE_DRAG
                     );
-        this.opt = opt || {};
+        this.opt = Object.assign(opt, defaultOpt);
         this.inputEl = opt.inputEl || document.createElement('input');
         this.inputEl.type = 'file';
         this.inputEl.hidden = true;
@@ -87,9 +93,10 @@ export class BeforeUpload extends EventEmitter {
                 return;
             }
             addEventsListener('paste', (e: ClipboardEvent) => {
+                console.log(e.clipboardData.files.length);
                 (this as EventEmitter).emit(e.type);
                 this.files = e.clipboardData.files;
-            });
+            }, this.opt.pasteOnDoc ? document : this.container); // Recommend add paste event on document 
         }
         if (BeforeUpload.ENABLE_DRAG & this.flag) {
             addEventsListener(['dragover', 'dragleave'], e => {
@@ -132,14 +139,30 @@ export class BeforeUpload extends EventEmitter {
                 this.container.removeEventListener(name, cb);
             });
         });
+        this.previews.forEach(url => URL.revokeObjectURL(url));
+    }
+
+    public getPreviewList () {
+        const accpet = this.inputEl.accept.toLowerCase();
+        if (accpet.indexOf('image') === -1) {
+            throw new Error('Only images supported.');
+        } 
+
+        this.previews = Array.from(this.files, file => {
+            return URL.createObjectURL(file);
+        });
+
+        return this.previews;
     }
 
     public enable () {
+        if (!this.disabled) return;
         this.disabled = false;
         this.addEvents();
     }
 
     private open () {
+        this.inputEl.value = '';
         this.inputEl.click();
     }
 
